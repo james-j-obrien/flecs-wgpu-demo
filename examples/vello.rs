@@ -1,5 +1,5 @@
 use flecs_ecs::prelude::*;
-use flecs_wgpu_rs::*;
+use flecs_wgpu_demo::*;
 use vello::{
     kurbo::{Affine, Vec2},
     peniko::Color,

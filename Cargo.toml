@@ -1,17 +1,14 @@
 [package]
-name = "flecs-wgpu-rs"
+name = "flecs-wgpu-demo"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 wgpu = "0.20.0"
 winit = "0.30.0"
-flecs_ecs = { path = "../../flecs/flecs-ecs-rs/flecs_ecs" }
+flecs_ecs = { git = "https://github.com/Indra-db/flecs-ecs-rs.git", rev = "12d136f705868e951d232b16825d1d76599aa749" }
 pollster = "0.3.0"
 deref-derive = "0.1.0"
-console_error_panic_hook = "0.1.7"
-console_log = "1.0.0"
-env_logger = "0.11.3"
 vello = { git = "https://github.com/linebender/vello.git", rev = "d917b8b" }
 
 [[example]]
