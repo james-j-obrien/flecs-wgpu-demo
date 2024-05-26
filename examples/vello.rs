@@ -30,7 +30,9 @@ struct Panning {
 }
 
 // Trait for all types that can be spawned
-trait Spawns: ComponentId {
+trait Spawns
+where
+    for<'a, 'b> &'a mut Self: IterableTypeOperation<ActualType<'b> = &'b mut Self> {
     fn spawn_system(world: &World) {
         system!(world,
             &ShapeColor($), &Cursor(up), &VelloScene(up), &mut Fill, &Transform, &mut Self, Spawning
@@ -76,7 +78,7 @@ fn main() {
     app.world
         .system::<()>()
         .kind::<flecs::pipeline::OnStart>()
-        .iter_only(|it| {
+        .run_iter(|it, _| {
             let world = it.world();
             let window = world.target::<MainWindow>(None);
             world
@@ -178,7 +180,7 @@ fn main() {
                 color.0 = Color::hlc(color.1, 80.0, 127.0);
             } else {
                 const BASE: f64 = 1.05;
-                scene.camera = Affine::translate(cursor_pos) * Affine::scale(BASE.powf(input.scroll_y())) * Affine::translate(- cursor_pos) * scene.camera;    
+                scene.camera = Affine::translate((cursor.x(), cursor.y())) * Affine::scale(BASE.powf(input.scroll_y())) * Affine::translate((-cursor.x(), -cursor.y())) * scene.camera;    
             }
         });
 

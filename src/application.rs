@@ -1,7 +1,7 @@
 use deref_derive::Deref;
 use flecs_ecs::{core::flecs::rest::Rest, prelude::*};
 use std::error::Error;
-use wgpu::SurfaceTargetUnsafe;
+use wgpu::{SurfaceTargetUnsafe, TextureFormat};
 use winit::{
     application::ApplicationHandler,
     dpi::PhysicalSize,
@@ -11,7 +11,7 @@ use winit::{
 };
 
 use crate::{
-    render::{DefaultFormat, RenderModule, WGPU},
+    render::{RenderModule, WGPU},
     window::{Window, WindowMap},
     Cursor, Input, TextWriter, VelloShapeModule,
 };
@@ -24,6 +24,8 @@ pub struct MainWindow;
 
 #[derive(Component)]
 pub struct WindowPrefab;
+
+#[derive(Default)]
 pub struct Application {
     pub world: World,
     initialized: bool,
@@ -31,62 +33,95 @@ pub struct Application {
 
 impl Application {
     pub fn new() -> Self {
-        Self {
-            world: World::new(),
-            initialized: false,
-        }
+        Self::default()
     }
 
-    pub fn create_window(
+    pub async fn initial_window(
         &mut self,
         event_loop: &ActiveEventLoop,
     ) -> Result<Entity, Box<dyn Error>> {
-        self.world.map::<&mut WGPU, _>(|wgpu| {
-            let window_attributes =
-                winit::window::Window::default_attributes().with_title("flecs-wgpu-rs");
+        let instance = wgpu::Instance::default();
+        let window_attributes =
+            winit::window::Window::default_attributes().with_title("flecs-wgpu-rs");
 
-            let window = event_loop.create_window(window_attributes)?;
+        let window = event_loop.create_window(window_attributes)?;
 
-            let surface = unsafe {
-                let surface_target = SurfaceTargetUnsafe::from_window(&window)
-                    .expect("Failed to create surface target.");
-                wgpu.instance
-                    .create_surface_unsafe(surface_target)
-                    .expect("Failed to create surface.")
-            };
+        let surface = unsafe {
+            let surface_target = SurfaceTargetUnsafe::from_window(&window)
+                .expect("Failed to create surface target.");
+            instance
+                .create_surface_unsafe(surface_target)
+                .expect("Failed to create surface.")
+        };
 
-            let mut size: winit::dpi::PhysicalSize<u32> = window.inner_size();
-            size.width = size.width.max(1);
-            size.height = size.height.max(1);
+        let adapter = instance
+            .request_adapter(&wgpu::RequestAdapterOptions {
+                power_preference: wgpu::PowerPreference::default(),
+                force_fallback_adapter: false,
+                compatible_surface: Some(&surface),
+            })
+            .await
+            .expect("Failed to find an appropriate adapter");
 
-            let mut config = surface
-                .get_default_config(&wgpu.adapter, size.width, size.height)
-                .unwrap();
-            // For vello
-            config.format = wgpu::TextureFormat::Rgba8Unorm;
-            config.usage |= wgpu::TextureUsages::STORAGE_BINDING;
+        // Create the logical device and command queue
+        let (device, queue) = adapter
+            .request_device(
+                &wgpu::DeviceDescriptor {
+                    label: None,
+                    required_features: wgpu::Features::empty(),
+                    required_limits: wgpu::Limits::default().using_resolution(adapter.limits()),
+                },
+                None,
+            )
+            .await
+            .expect("Failed to create device");
 
-            surface.configure(&wgpu.device, &config);
+        let mut size: winit::dpi::PhysicalSize<u32> = window.inner_size();
+        size.width = size.width.max(1);
+        size.height = size.height.max(1);
 
-            let window_id = window.id();
-            let window_e = self
-                .world
-                .entity()
-                .set(Window {
-                    window,
-                    surface,
-                    config,
-                    redraw: true,
-                    texture: None,
-                    view: None,
-                })
-                .is_a::<WindowPrefab>();
+        let mut config = surface
+            .get_default_config(&adapter, size.width, size.height)
+            .unwrap();
+        // For vello
+        let capabilities = surface.get_capabilities(&adapter);
+        let format = capabilities
+            .formats
+            .into_iter()
+            .find(|it| matches!(it, TextureFormat::Rgba8Unorm | TextureFormat::Bgra8Unorm))
+            .expect("surface should support Rgba8Unorm or Bgra8Unorm");
+        config.format = format;
+        config.usage |= wgpu::TextureUsages::RENDER_ATTACHMENT;
 
-            self.world.get::<&mut WindowMap>(|map| {
-                map.insert(window_id, window_e.id());
-            });
-            Ok(window_e.id())
-        })
+        surface.configure(&device, &config);
+
+        let wgpu = WGPU {
+            adapter,
+            device,
+            instance,
+            queue,
+            format,
+        };
+
+        let window_id = window.id();
+        let window_e = self
+            .world
+            .entity()
+            .set(Window {
+                window,
+                surface,
+                config,
+                redraw: true,
+                texture: None,
+                view: None,
+            })
+            .is_a::<WindowPrefab>();
+
+        self.world.set(wgpu);
+        self.world.get::<&mut WindowMap>(|map| {
+            map.insert(window_id, window_e.id());
+        });
+        Ok(window_e.id())
     }
 
     pub async fn initialize(&mut self, event_loop: &ActiveEventLoop) {
@@ -97,24 +132,15 @@ impl Application {
         self.world.set(WindowMap::default());
         self.world.set(Rest::default());
 
-        let instance = wgpu::Instance::default();
-        self.world.set(WGPU::new(instance).await);
-
         self.world
             .prefab_type::<WindowPrefab>()
             .set(Cursor::default());
 
         let initial_window = self
-            .create_window(event_loop)
+            .initial_window(event_loop)
+            .await
             .expect("Failed to create initial window.")
             .entity_view(&self.world);
-
-        self.world.get::<&mut WGPU>(|wgpu| {
-            initial_window.get::<&mut Window>(|window| {
-                let capabilities = window.surface.get_capabilities(&wgpu.adapter);
-                self.world.set(DefaultFormat(capabilities.formats[0]));
-            });
-        });
 
         self.world.set(Input::default());
         system!(self.world, &mut Input($))

@@ -43,7 +43,42 @@ impl Transform {
     }
 }
 
-pub trait VelloShape: ComponentId {
+pub trait ComponentTrait
+where
+    Self: ComponentId,
+    Self: FlecsCastType<CastType = Self>,
+    for<'a, 'b> &'a Self:
+        IterableTypeOperation<ActualType<'b> = &'b <Self as FlecsCastType>::CastType>,
+    for<'a, 'b> &'a mut Self:
+        IterableTypeOperation<ActualType<'b> = &'b mut <Self as FlecsCastType>::CastType>,
+{
+}
+
+impl<T> ComponentTrait for T
+where
+    T: ComponentId,
+    T: FlecsCastType<CastType = T>,
+    for<'a, 'b> &'a T: IterableTypeOperation<ActualType<'b> = &'b <T as FlecsCastType>::CastType>,
+    for<'a, 'b> &'a mut T:
+        IterableTypeOperation<ActualType<'b> = &'b mut <T as FlecsCastType>::CastType>,
+{
+}
+
+pub trait VelloShape: ComponentTrait {
+    fn systems(world: &World) {
+        system!(world, &mut VelloScene(up), &Stroke, &Transform, &Self).each(
+            |(scene, stroke, transform, shape)| {
+                shape.stroke(scene, stroke, scene.camera * **transform);
+            },
+        );
+
+        system!(world, &mut VelloScene(up), &Fill, &Transform, &Self).each(
+            |(scene, fill, transform, shape)| {
+                shape.fill(scene, fill, scene.camera * **transform);
+            },
+        );
+    }
+
     fn shape(&self) -> impl vello::kurbo::Shape;
 
     fn fill(&self, scene: &mut VelloScene, fill: &Fill, transform: impl Into<Affine>) {
@@ -63,20 +98,6 @@ pub trait VelloShape: ComponentId {
             stroke.color,
             None,
             &self.shape(),
-        );
-    }
-
-    fn systems(world: &World) {
-        system!(world, &mut VelloScene(up), &Stroke, &Transform, &Self).each(
-            |(scene, stroke, transform, shape)| {
-                shape.stroke(scene, stroke, scene.camera * **transform);
-            },
-        );
-
-        system!(world, &mut VelloScene(up), &Fill, &Transform, &Self).each(
-            |(scene, fill, transform, shape)| {
-                shape.fill(scene, fill, scene.camera * **transform);
-            },
         );
     }
 }

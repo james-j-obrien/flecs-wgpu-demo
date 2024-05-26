@@ -5,48 +5,13 @@ use wgpu::{Adapter, Device, Instance, Queue, TextureFormat};
 
 use crate::{application::Resize, window::Window};
 
-#[derive(Component, Deref)]
-pub struct DefaultFormat(pub TextureFormat);
-
 #[derive(Component)]
 pub struct WGPU {
     pub adapter: Adapter,
     pub device: Device,
     pub instance: Instance,
     pub queue: Queue,
-}
-
-impl WGPU {
-    pub async fn new(instance: Instance) -> Self {
-        let adapter = instance
-            .request_adapter(&wgpu::RequestAdapterOptions {
-                power_preference: wgpu::PowerPreference::default(),
-                force_fallback_adapter: false,
-                compatible_surface: None,
-            })
-            .await
-            .expect("Failed to find an appropriate adapter");
-
-        // Create the logical device and command queue
-        let (device, queue) = adapter
-            .request_device(
-                &wgpu::DeviceDescriptor {
-                    label: None,
-                    required_features: wgpu::Features::empty(),
-                    required_limits: wgpu::Limits::default().using_resolution(adapter.limits()),
-                },
-                None,
-            )
-            .await
-            .expect("Failed to create device");
-
-        Self {
-            adapter,
-            device,
-            instance,
-            queue,
-        }
-    }
+    pub format: TextureFormat,
 }
 
 #[derive(Component)]
@@ -60,7 +25,7 @@ impl Vello {
             renderer: vello::Renderer::new(
                 &wgpu.device,
                 vello::RendererOptions {
-                    surface_format: None,
+                    surface_format: Some(wgpu.format),
                     use_cpu: false,
                     antialiasing_support: vello::AaSupport::area_only(),
                     num_init_threads: NonZeroUsize::new(1),
@@ -144,14 +109,14 @@ impl Module for RenderModule {
                         &vello::kurbo::Rect::new(0.0, 0.0, 0.0, 0.0),
                     );
                 }
-                if let Some(view) = &window.view {
+                if let Some(surface) = &window.texture {
                     vello
                         .renderer
-                        .render_to_texture(
+                        .render_to_surface(
                             &wgpu.device,
                             &wgpu.queue,
-                            &scene,
-                            &view,
+                            scene,
+                            surface,
                             &vello::RenderParams {
                                 base_color: scene.base_color,
                                 width: window.config.width,
