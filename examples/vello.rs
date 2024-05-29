@@ -30,9 +30,7 @@ struct Panning {
 }
 
 // Trait for all types that can be spawned
-trait Spawns
-where
-    for<'a, 'b> &'a mut Self: IterableTypeOperation<ActualType<'b> = &'b mut Self> {
+trait Spawns: VelloShape {
     fn spawn_system(world: &World) {
         system!(world,
             &ShapeColor($), &Cursor(up), &VelloScene(up), &mut Fill, &Transform, &mut Self, Spawning
