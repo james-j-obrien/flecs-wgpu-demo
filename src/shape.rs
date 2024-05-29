@@ -43,28 +43,7 @@ impl Transform {
     }
 }
 
-pub trait ComponentTrait
-where
-    Self: ComponentId,
-    Self: FlecsCastType<CastType = Self>,
-    for<'a, 'b> &'a Self:
-        IterableTypeOperation<ActualType<'b> = &'b <Self as FlecsCastType>::CastType>,
-    for<'a, 'b> &'a mut Self:
-        IterableTypeOperation<ActualType<'b> = &'b mut <Self as FlecsCastType>::CastType>,
-{
-}
-
-impl<T> ComponentTrait for T
-where
-    T: ComponentId,
-    T: FlecsCastType<CastType = T>,
-    for<'a, 'b> &'a T: IterableTypeOperation<ActualType<'b> = &'b <T as FlecsCastType>::CastType>,
-    for<'a, 'b> &'a mut T:
-        IterableTypeOperation<ActualType<'b> = &'b mut <T as FlecsCastType>::CastType>,
-{
-}
-
-pub trait VelloShape: ComponentTrait {
+pub trait VelloShape: ComponentId + FlecsCastType<CastType = Self> {
     fn systems(world: &World) {
         system!(world, &mut VelloScene(up), &Stroke, &Transform, &Self).each(
             |(scene, stroke, transform, shape)| {
