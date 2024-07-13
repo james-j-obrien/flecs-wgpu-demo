@@ -6,6 +6,7 @@ use vello::kurbo::Affine;
 use vello::peniko::{Color, Fill};
 use vello::Scene;
 
+// Singleton that handles writing text to scenes
 #[derive(Component)]
 pub struct TextWriter {
     font_cx: FontContext,
