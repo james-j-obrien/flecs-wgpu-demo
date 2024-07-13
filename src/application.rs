@@ -174,7 +174,7 @@ impl ApplicationHandler<()> for Application {
     ) {
         let window_e = self.world.map::<&WindowMap, _>(|map| {
             map.get(&window_id)
-                .expect("Event for non-existant window.")
+                .expect("Event for non-existent window.")
                 .entity_view(&self.world)
         });
         match event {

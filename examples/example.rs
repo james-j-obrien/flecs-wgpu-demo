@@ -14,7 +14,7 @@ enum ShapeType {
     Rectangle,
 }
 
-// Color to spawn shapes with, hue stored seperately so it can easily be mutated
+// Color to spawn shapes with, hue stored separately so it can easily be mutated
 #[derive(Component)]
 struct ShapeColor(Color, f64);
 
