@@ -11,9 +11,9 @@ use winit::{
 };
 
 use crate::{
-    render::{RenderModule, WGPU},
+    render::WGPU,
     window::{Window, WindowMap},
-    Cursor, Input, TextWriter, VelloShapeModule,
+    Cursor, Input, RenderModule, TextWriter, VelloShapeModule,
 };
 
 #[derive(Component, Deref)]
@@ -83,6 +83,7 @@ impl Application {
         let mut config = surface
             .get_default_config(&adapter, size.width, size.height)
             .unwrap();
+
         // For vello
         let capabilities = surface.get_capabilities(&adapter);
         let format = capabilities
@@ -106,7 +107,7 @@ impl Application {
         let window_id = window.id();
         let window_e = self
             .world
-            .entity()
+            .entity_named("window")
             .set(Window {
                 window,
                 surface,
@@ -143,15 +144,11 @@ impl Application {
             .entity_view(&self.world);
 
         self.world.set(Input::default());
-        system!(self.world, &mut Input($))
-            .kind::<flecs::pipeline::PostFrame>()
-            .each(|input| {
-                input.clear_frame();
-            });
-
         self.world.set(TextWriter::new());
 
         self.world.add_first::<MainWindow>(initial_window.id());
+
+        self.world.import::<ApplicationModule>();
         self.world.import::<RenderModule>();
         self.world.import::<VelloShapeModule>();
     }
@@ -187,7 +184,7 @@ impl ApplicationHandler<()> for Application {
                 self.world
                     .event()
                     .add::<Window>()
-                    .target(window_e)
+                    .entity(window_e)
                     .emit(&Resize(new_size));
             }
             WindowEvent::RedrawRequested => {
@@ -202,5 +199,20 @@ impl ApplicationHandler<()> for Application {
         window_e.get::<&mut Cursor>(|cursor| cursor.process_event(&event));
         self.world
             .get::<&mut Input>(|input| input.process_event(&event));
+    }
+}
+
+#[derive(Component)]
+pub struct ApplicationModule;
+
+impl Module for ApplicationModule {
+    fn module(world: &World) {
+        world.module::<Self>("module");
+
+        system!("clear_input", world, &mut Input($))
+            .kind::<flecs::pipeline::OnStore>()
+            .each(|input| {
+                input.clear_frame();
+            });
     }
 }

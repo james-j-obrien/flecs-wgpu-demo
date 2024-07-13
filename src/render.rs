@@ -63,23 +63,26 @@ pub struct RenderModule;
 
 impl Module for RenderModule {
     fn module(world: &World) {
+        world.module::<Self>("module");
+
         world.get::<&mut WGPU>(|wgpu| {
             world.set(Vello::new(wgpu));
         });
 
         // Respond to window events
-        observer!(world, Resize, &WGPU($), &mut Window).each_iter(|it, _, (wgpu, window)| {
-            let data = it.param();
-            // Reconfigure the surface with the new size
-            window.config.width = data.width.max(1);
-            window.config.height = data.height.max(1);
-            window.surface.configure(&wgpu.device, &window.config);
-        });
+        observer!("resize_window", world, Resize, &WGPU($), &mut Window).each_iter(
+            |it, _, (wgpu, window)| {
+                let data = it.param();
+                // Reconfigure the surface with the new size
+                window.config.width = data.width.max(1);
+                window.config.height = data.height.max(1);
+                window.surface.configure(&wgpu.device, &window.config);
+            },
+        );
 
-        // Redraw each window
         world
-            .system::<&mut Window>()
-            .kind::<flecs::pipeline::PostUpdate>()
+            .system_named::<&mut Window>("create_texture")
+            .kind::<flecs::pipeline::OnStore>()
             .each(|window| {
                 if !window.redraw {
                     return;
@@ -96,8 +99,8 @@ impl Module for RenderModule {
                 window.view = Some(view);
             });
 
-        system!(world, &mut WGPU($), &mut Vello($), &mut Window(up), &mut VelloScene)
-            .kind::<flecs::pipeline::PostUpdate>()
+        system!("render_vello_scene", world, &mut WGPU($), &mut Vello($), &mut Window(up), &mut VelloScene)
+            .kind::<flecs::pipeline::OnStore>()
             .each(|(wgpu, vello, window, scene)| {
                 if scene.encoding().is_empty() {
                     // Add no-op shape to avoid debug assert
@@ -130,8 +133,8 @@ impl Module for RenderModule {
             });
 
         world
-            .system::<&mut Window>()
-            .kind::<flecs::pipeline::PostUpdate>()
+            .system_named::<&mut Window>("present_texture")
+            .kind::<flecs::pipeline::OnStore>()
             .each(|window| {
                 if let Some(texture) = window.texture.take() {
                     texture.present();

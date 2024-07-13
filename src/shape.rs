@@ -43,7 +43,7 @@ impl Transform {
     }
 }
 
-pub trait VelloShape: ComponentId + FlecsCastType<CastType = Self> {
+pub trait VelloShape: ComponentId {
     fn systems(world: &World) {
         system!(world, &mut VelloScene(up), &Stroke, &Transform, &Self).each(
             |(scene, stroke, transform, shape)| {
@@ -86,6 +86,8 @@ pub struct VelloShapeModule;
 
 impl Module for VelloShapeModule {
     fn module(world: &World) {
+        world.module::<Self>("module");
+
         Circle::systems(world);
         Rect::systems(world);
         Line::systems(world);

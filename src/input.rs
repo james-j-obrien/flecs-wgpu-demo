@@ -30,6 +30,7 @@ impl From<MouseButton> for Button {
     }
 }
 
+// Input singleton that tracks button presses and scrolling
 #[derive(Component, Default, Debug)]
 pub struct Input {
     just_pressed: HashSet<Button>,
@@ -108,6 +109,7 @@ impl Input {
     }
 }
 
+// Tracks cursor position per window
 #[derive(Component, Default)]
 pub struct Cursor {
     x: f64,
