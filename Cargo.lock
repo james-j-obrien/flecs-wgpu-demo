@@ -581,8 +581,9 @@ dependencies = [
 
 [[package]]
 name = "flecs_ecs"
-version = "0.0.2"
-source = "git+https://github.com/Indra-db/flecs-ecs-rs.git#25c58d4280f1a1ad589398bce1abc3bc32153355"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4d5c1c4144a22745907c1055286d700c1bf243eb25e7162d2d299b9755046b25"
 dependencies = [
  "compact_str",
  "flecs_ecs_derive",
@@ -593,7 +594,8 @@ dependencies = [
 [[package]]
 name = "flecs_ecs_derive"
 version = "0.1.0"
-source = "git+https://github.com/Indra-db/flecs-ecs-rs.git#25c58d4280f1a1ad589398bce1abc3bc32153355"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "980c979fff7697e6f43562e10e6371470614f8dd27a0b5e60d335fae838ac2dd"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -603,7 +605,8 @@ dependencies = [
 [[package]]
 name = "flecs_ecs_sys"
 version = "0.1.0"
-source = "git+https://github.com/Indra-db/flecs-ecs-rs.git#25c58d4280f1a1ad589398bce1abc3bc32153355"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "929b5323500a625d8d6922c5824a0188e7f2b0bf6cbf9f8b0b8c2e9adae3619a"
 dependencies = [
  "bindgen",
  "cc",

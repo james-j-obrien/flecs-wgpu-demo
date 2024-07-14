@@ -6,8 +6,7 @@ edition = "2021"
 [dependencies]
 wgpu = "0.20.0"
 winit = "0.30.0"
-flecs_ecs = { git = "https://github.com/Indra-db/flecs-ecs-rs.git" }
-# flecs_ecs = { path = "../../flecs/flecs-ecs-rs/flecs_ecs" }
+flecs_ecs = "0.1.1"
 pollster = "0.3.0"
 deref-derive = "0.1.0"
 vello = { git = "https://github.com/linebender/vello.git", rev = "ba855c573b188fc7c4c76e34fc2f22c9c118db8b" }
