@@ -22,7 +22,7 @@ impl TextWriter {
         }
     }
 
-    pub fn add<'a>(
+    pub fn add(
         &mut self,
         scene: &mut Scene,
         transform: Affine,

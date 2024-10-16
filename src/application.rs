@@ -172,7 +172,7 @@ impl ApplicationHandler<()> for Application {
         window_id: WindowId,
         event: WindowEvent,
     ) {
-        let window_e = self.world.map::<&WindowMap, _>(|map| {
+        let window_e = self.world.get::<&WindowMap>(|map| {
             map.get(&window_id)
                 .expect("Event for non-existent window.")
                 .entity_view(&self.world)

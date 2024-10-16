@@ -5,12 +5,13 @@ edition = "2021"
 
 [dependencies]
 wgpu = "0.20.0"
-winit = "0.30.0"
-flecs_ecs = "0.1.1"
+winit = "0.30.5"
 pollster = "0.3.0"
 deref-derive = "0.1.0"
 vello = { git = "https://github.com/linebender/vello.git", rev = "ba855c573b188fc7c4c76e34fc2f22c9c118db8b" }
 parley = { git = "https://github.com/linebender/parley.git", rev = "a103f1887fd2c99fd5663a4ef9e85bd5f95375cf"}
+flecs_ecs = { git = "https://github.com/Indra-db/Flecs-Rust.git", rev = "38742f1"}
+
 
 [[example]]
 name = "example"
