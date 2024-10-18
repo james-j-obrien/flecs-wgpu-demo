@@ -33,7 +33,7 @@ struct Panning {
 trait Spawns: VelloShape {
     fn spawn_system(world: &World) {
         system!(world,
-            &ShapeColor($), &Cursor(up), &VelloScene(up), &mut Fill, &Transform, &mut Self, Spawning
+            &ShapeColor($), &flecs_wgpu_demo::Cursor(up), &VelloScene(up), &mut Fill, &Transform, &mut Self, Spawning
         )
         .each(|(color, cursor, scene, fill, tf, shape)| {
             let cursor_tf = scene.camera.inverse() * Affine::translate((cursor.x(), cursor.y()));
@@ -92,7 +92,7 @@ impl Module for ExampleModule {
                     Affine::translate((10.0, window.height() as f64 - 60.0)),
                     Color::WHITE,
                     20.0,
-                    &format!("Shift + Scroll to change color.\nCurrent: "),
+                    "Shift + Scroll to change color.\nCurrent:",
                 );
 
                 let color_preview = Rect::new(120.0, 16.0);
@@ -102,7 +102,7 @@ impl Module for ExampleModule {
             });
 
 
-        system!("handle_input", world, &mut ShapeType($), &mut ShapeColor($), &Input($), &Cursor(up), &mut VelloScene)
+        system!("handle_input", world, &mut ShapeType($), &mut ShapeColor($), &Input($), &flecs_wgpu_demo::Cursor(up), &mut VelloScene)
             .each_entity(|e, (ty, color, input, cursor, scene)| {
                 let world = e.world();
                 let cursor_tf = scene.camera.inverse() * Affine::translate((cursor.x(), cursor.y()));
@@ -181,7 +181,7 @@ fn main() {
     app.world
         .system_named::<()>("setup_scene")
         .kind::<flecs::pipeline::OnStart>()
-        .run_iter(|it, _| {
+        .run(|it| {
             let world = it.world();
             let window = world.target::<MainWindow>(None);
             world

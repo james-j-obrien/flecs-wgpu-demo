@@ -4,13 +4,13 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-wgpu = "0.20.0"
-winit = "0.30.0"
-flecs_ecs = "0.1.1"
+wgpu = "22.1.0"
+winit = "0.30.5"
 pollster = "0.3.0"
 deref-derive = "0.1.0"
-vello = { git = "https://github.com/linebender/vello.git", rev = "ba855c573b188fc7c4c76e34fc2f22c9c118db8b" }
-parley = { git = "https://github.com/linebender/parley.git", rev = "a103f1887fd2c99fd5663a4ef9e85bd5f95375cf"}
+vello = { git = "https://github.com/linebender/vello.git", rev = "15082ba" } #release 0.3.0
+parley = { git = "https://github.com/linebender/parley.git", rev = "1adcf998a6ef7fe222bc30ffd0a30c3ffa7583f6"} # release 0.2.0
+flecs_ecs = { git = "https://github.com/Indra-db/Flecs-Rust.git", rev = "38742f1"} # 15 october
 
 [[example]]
 name = "example"

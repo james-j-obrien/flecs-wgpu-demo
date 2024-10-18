@@ -70,6 +70,7 @@ impl Application {
                     label: None,
                     required_features: wgpu::Features::empty(),
                     required_limits: wgpu::Limits::default().using_resolution(adapter.limits()),
+                    memory_hints: Default::default(),
                 },
                 None,
             )
@@ -172,7 +173,7 @@ impl ApplicationHandler<()> for Application {
         window_id: WindowId,
         event: WindowEvent,
     ) {
-        let window_e = self.world.map::<&WindowMap, _>(|map| {
+        let window_e = self.world.get::<&WindowMap>(|map| {
             map.get(&window_id)
                 .expect("Event for non-existent window.")
                 .entity_view(&self.world)

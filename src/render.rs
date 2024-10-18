@@ -1,6 +1,6 @@
 use deref_derive::{Deref, DerefMut};
 use flecs_ecs::prelude::*;
-use std::num::NonZeroUsize;
+use std::{num::NonZeroUsize, sync::Mutex};
 use wgpu::{Adapter, Device, Instance, Queue, TextureFormat};
 
 use crate::{application::Resize, window::Window};
@@ -16,22 +16,26 @@ pub struct WGPU {
 
 #[derive(Component)]
 pub struct Vello {
-    renderer: vello::Renderer,
+    // The `Mutex` makes this `Sync` (it is already `Send`) so that we
+    // can store it as a component.
+    renderer: Mutex<vello::Renderer>,
 }
 
 impl Vello {
     pub fn new(wgpu: &mut WGPU) -> Self {
         Self {
-            renderer: vello::Renderer::new(
-                &wgpu.device,
-                vello::RendererOptions {
-                    surface_format: Some(wgpu.format),
-                    use_cpu: false,
-                    antialiasing_support: vello::AaSupport::area_only(),
-                    num_init_threads: NonZeroUsize::new(1),
-                },
-            )
-            .expect("Failed to create vello renderer."),
+            renderer: Mutex::new(
+                vello::Renderer::new(
+                    &wgpu.device,
+                    vello::RendererOptions {
+                        surface_format: Some(wgpu.format),
+                        use_cpu: false,
+                        antialiasing_support: vello::AaSupport::area_only(),
+                        num_init_threads: NonZeroUsize::new(1),
+                    },
+                )
+                .expect("Failed to create vello renderer."),
+            ),
         }
     }
 }
@@ -114,7 +118,7 @@ impl Module for RenderModule {
                 }
                 if let Some(surface) = &window.texture {
                     vello
-                        .renderer
+                        .renderer.lock().unwrap()
                         .render_to_surface(
                             &wgpu.device,
                             &wgpu.queue,

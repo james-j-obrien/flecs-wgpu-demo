@@ -110,7 +110,7 @@ impl Input {
 }
 
 // Tracks cursor position per window
-#[derive(Component, Default)]
+#[derive(Component, Default, Clone)]
 pub struct Cursor {
     x: f64,
     y: f64,
