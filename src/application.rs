@@ -1,7 +1,7 @@
 use deref_derive::Deref;
 use flecs_ecs::{core::flecs::rest::Rest, prelude::*};
 use std::error::Error;
-use wgpu::{SurfaceTargetUnsafe, TextureFormat};
+use wgpu::{SurfaceTargetUnsafe, TextureFormat, Trace};
 use winit::{
     application::ApplicationHandler,
     dpi::PhysicalSize,
@@ -65,15 +65,14 @@ impl Application {
 
         // Create the logical device and command queue
         let (device, queue) = adapter
-            .request_device(
-                &wgpu::DeviceDescriptor {
-                    label: None,
-                    required_features: wgpu::Features::empty(),
-                    required_limits: wgpu::Limits::default().using_resolution(adapter.limits()),
-                    memory_hints: Default::default(),
-                },
-                None,
-            )
+            .request_device(&wgpu::DeviceDescriptor {
+                label: None,
+                required_features: wgpu::Features::empty(),
+                required_limits: wgpu::Limits::default().using_resolution(adapter.limits()),
+                memory_hints: Default::default(),
+                experimental_features: Default::default(),
+                trace: Trace::Off,
+            })
             .await
             .expect("Failed to create device");
 
@@ -85,13 +84,17 @@ impl Application {
             .get_default_config(&adapter, size.width, size.height)
             .unwrap();
 
-        // For vello
+        // For vello - we'll use the native surface format but render to an intermediate Rgba8Unorm texture
         let capabilities = surface.get_capabilities(&adapter);
-        let format = capabilities
-            .formats
-            .into_iter()
-            .find(|it| matches!(it, TextureFormat::Rgba8Unorm | TextureFormat::Bgra8Unorm))
-            .expect("surface should support Rgba8Unorm or Bgra8Unorm");
+
+        let format = if capabilities.formats.contains(&TextureFormat::Rgba8Unorm) {
+            TextureFormat::Rgba8Unorm
+        } else if capabilities.formats.contains(&TextureFormat::Bgra8Unorm) {
+            TextureFormat::Bgra8Unorm
+        } else {
+            panic!("Surface doesn't support Rgba8Unorm or Bgra8Unorm");
+        };
+
         config.format = format;
         config.usage |= wgpu::TextureUsages::RENDER_ATTACHMENT;
 
@@ -116,8 +119,10 @@ impl Application {
                 redraw: true,
                 texture: None,
                 view: None,
+                render_texture: None,
+                render_view: None,
             })
-            .is_a::<WindowPrefab>();
+            .is_a(WindowPrefab);
 
         self.world.set(wgpu);
         self.world.get::<&mut WindowMap>(|map| {
@@ -147,7 +152,7 @@ impl Application {
         self.world.set(Input::default());
         self.world.set(TextWriter::new());
 
-        self.world.add_first::<MainWindow>(initial_window.id());
+        self.world.add((MainWindow, initial_window.id()));
 
         self.world.import::<ApplicationModule>();
         self.world.import::<RenderModule>();
@@ -184,7 +189,7 @@ impl ApplicationHandler<()> for Application {
 
                 self.world
                     .event()
-                    .add::<Window>()
+                    .add(Window::id())
                     .entity(window_e)
                     .emit(&Resize(new_size));
             }
@@ -210,8 +215,8 @@ impl Module for ApplicationModule {
     fn module(world: &World) {
         world.module::<Self>("module");
 
-        system!("clear_input", world, &mut Input($))
-            .kind::<flecs::pipeline::OnStore>()
+        system!("clear_input", world, &mut Input)
+            .kind(flecs::pipeline::OnStore)
             .each(|input| {
                 input.clear_frame();
             });

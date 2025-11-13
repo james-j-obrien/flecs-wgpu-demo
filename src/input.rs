@@ -32,6 +32,7 @@ impl From<MouseButton> for Button {
 
 // Input singleton that tracks button presses and scrolling
 #[derive(Component, Default, Debug)]
+#[flecs(traits(Singleton))]
 pub struct Input {
     just_pressed: HashSet<Button>,
     pressed: HashSet<Button>,

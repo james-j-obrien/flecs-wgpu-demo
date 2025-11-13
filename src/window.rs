@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use deref_derive::{Deref, DerefMut};
 use flecs_ecs::prelude::*;
-use wgpu::{Surface, SurfaceConfiguration, SurfaceTexture, TextureView};
+use wgpu::{Surface, SurfaceConfiguration, SurfaceTexture, Texture, TextureView};
 use winit::window::WindowId;
 
 #[derive(Component, Default, Deref, DerefMut)]
@@ -17,6 +17,8 @@ pub struct Window {
     pub(crate) redraw: bool,
     pub(crate) texture: Option<SurfaceTexture>,
     pub(crate) view: Option<TextureView>,
+    pub(crate) render_texture: Option<Texture>,
+    pub(crate) render_view: Option<TextureView>,
 }
 
 impl Window {
